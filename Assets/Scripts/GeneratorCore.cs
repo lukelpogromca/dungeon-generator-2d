@@ -146,7 +146,7 @@ namespace DG2D
         {
             int breakCounter = breakNumber;
             int roomCounter = roomCount;
-            currentGameBoard = new DungeonTile[gameBoardWidth, gameBoardHeight];
+            currentGameBoard = new DungeonTile[gameBoardHeight, gameBoardWidth];
             TreeNode root = new TreeNode(RoomDefinitions.GetRandomRoom());
             Queue<TreeNode> queue = new Queue<TreeNode>();
 
@@ -175,9 +175,10 @@ namespace DG2D
                     }
                     else
                     {
-                    Vector2Int pos = new Vector2Int(gameBoardWidth / 2, gameBoardHeight / 2);//new Vector2Int(Random.Range(0, gameBoardWidth), Random.Range(0, gameBoardHeight));
-                    if (!TryPlaceRoom(currentNode, pos))
+                        Vector2Int pos = new Vector2Int(gameBoardWidth / 2, gameBoardHeight / 2);//new Vector2Int(Random.Range(0, gameBoardWidth), Random.Range(0, gameBoardHeight));
+                        if (!TryPlaceRoom(currentNode, pos))
                         {
+                            currentNode = new TreeNode(RoomDefinitions.GetRandomRoom());
                             queue.Enqueue(currentNode);
                             continue;
                         }

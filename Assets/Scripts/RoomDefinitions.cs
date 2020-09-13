@@ -4,7 +4,7 @@ namespace DG2D.Globals
 {
     public static class RoomDefinitions
     {
-        private static DungeonComponent[] data =
+        private static readonly DungeonComponent[] data =
         {
                 new DungeonComponent(new DungeonTile[3, 5]
                 {

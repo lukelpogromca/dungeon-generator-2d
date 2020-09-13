@@ -143,11 +143,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   gameBoardHeight: 200
   gameBoardWidth: 200
-  roomCount: 50
+  roomCount: 30
   eventRoomCount: 2
-  breakNumber: 50
-  populationCount: 50
-  generations: 10
+  breakNumber: 100
+  populationCount: 30
+  generations: 50
   mutationGrowX: 3
   mutationGrowY: 4
   mutationGrowProb: 70
