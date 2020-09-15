@@ -87,12 +87,14 @@ namespace DG2D
                 population[i] = GeneratePhenotype();
 
             FitnessComparer comparer = new FitnessComparer(this);
+            Phenotype[] childrenPopulation = new Phenotype[populationCount];
 
-            for(int i = 0; i < generations; i++)
+            for (int i = 0; i < generations; i++)
             {
                 Array.Sort(population, comparer);
-                Phenotype[] childrenPopulation = new Phenotype[populationCount];
+                Array.Clear(childrenPopulation, 0, childrenPopulation.Length);
                 bool flag = true;
+
                 for(int j = 0; j < population.Length; j++)
                 {
                     if (flag)
@@ -123,19 +125,6 @@ namespace DG2D
                 Array.Sort(childrenPopulation, comparer);
                 Array.Copy(childrenPopulation, 0, population, population.Length / 2, population.Length / 2);
             }
-            /*
-            Phenotype mom = GeneratePhenotype();
-            Phenotype dad = GeneratePhenotype();
-            Phenotype son;
-            Phenotype daughter;
-
-            Crossover(mom, dad, out son, out daughter);
-            
-            Debug.LogFormat("{0}, {1}", mom.Root.Count, Evaluate(mom));
-            Debug.LogFormat("{0}, {1}", dad.Root.Count, Evaluate(dad));
-            Debug.LogFormat("{0}, {1}", son.Root.Count, Evaluate(son));
-            Debug.LogFormat("{0}, {1}", daughter.Root.Count, Evaluate(daughter));
-            */
             Array.Sort(population, comparer);
             currentGameBoard = population[0].GameBoard;
             Draw();
@@ -175,7 +164,7 @@ namespace DG2D
                     }
                     else
                     {
-                        Vector2Int pos = new Vector2Int(gameBoardWidth / 2, gameBoardHeight / 2);//new Vector2Int(Random.Range(0, gameBoardWidth), Random.Range(0, gameBoardHeight));
+                        Vector2Int pos = new Vector2Int(gameBoardWidth / 2, gameBoardHeight /2);//new Vector2Int(Random.Range(0, gameBoardWidth), Random.Range(0, gameBoardHeight));
                         if (!TryPlaceRoom(currentNode, pos))
                         {
                             currentNode = new TreeNode(RoomDefinitions.GetRandomRoom());
@@ -398,8 +387,6 @@ namespace DG2D
         private void MutationGrow(Phenotype phenotype)
         {
             currentGameBoard = phenotype.GameBoard;
-
-            List<TreeNode> treeNodes = new List<TreeNode>();
             List<TreeNode> openRooms = phenotype.Root.ToList().Where(a => a.Entrances.Any(b => b.Value == false)).ToList();
             int x = openRooms.Count < mutationGrowX ? openRooms.Count : mutationGrowX;
             int y = mutationGrowY;
@@ -477,7 +464,7 @@ namespace DG2D
             }
             float hallwayFactor = roomConnections * .3f + hallwayConnections * .2f - deadEndCounter * .5f;
 
-            return standardRoomCounter * nonHallwayCountMultiplier + hallwayFactor - (Math.Abs(roomCount - roomCounter) * roomCountMultiplier + Math.Abs(eventRoomCount - eventRoomCounter) * eventRoomCountMultiplier);
+            return (standardRoomCounter + eventRoomCounter) * nonHallwayCountMultiplier + hallwayFactor - (Math.Abs(roomCount - roomCounter) * roomCountMultiplier + Math.Abs(eventRoomCount - eventRoomCounter) * eventRoomCountMultiplier);
         }
     }
     public class FitnessComparer : IComparer<Phenotype>

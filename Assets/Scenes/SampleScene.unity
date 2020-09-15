@@ -141,22 +141,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 31c6af14df7703440928fe580f8d549b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gameBoardHeight: 200
-  gameBoardWidth: 200
-  roomCount: 30
-  eventRoomCount: 2
-  breakNumber: 100
-  populationCount: 30
-  generations: 50
+  gameBoardHeight: 100
+  gameBoardWidth: 100
+  roomCount: 100
+  eventRoomCount: 3
+  breakNumber: 170
+  populationCount: 480
+  generations: 500
   mutationGrowX: 3
   mutationGrowY: 4
   mutationGrowProb: 70
   mutationTrimProb: 70
   origin: {x: 0, y: 0, z: 0}
-  emptyTile: {fileID: 11400000, guid: 3727cfd949ca9a642846d038b1966db2, type: 2}
-  floorTile: {fileID: 11400000, guid: 3669493d9df3cbe4f98c633bd242984d, type: 2}
-  wallTile: {fileID: 11400000, guid: e4611cc6a993d89478051ed15dc5a744, type: 2}
-  doorTile: {fileID: 11400000, guid: 612ead04328579b4c86c992f74ec0400, type: 2}
+  emptyTile: {fileID: 11400000, guid: b3b0a1b948e537845b269500b235c218, type: 2}
+  floorTile: {fileID: 11400000, guid: 742123e3d16432145b033242f8fedcde, type: 2}
+  wallTile: {fileID: 11400000, guid: 3727cfd949ca9a642846d038b1966db2, type: 2}
+  doorTile: {fileID: 11400000, guid: 742123e3d16432145b033242f8fedcde, type: 2}
 --- !u!4 &113727592
 Transform:
   m_ObjectHideFlags: 0
