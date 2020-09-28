@@ -141,13 +141,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 31c6af14df7703440928fe580f8d549b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gameBoardHeight: 100
-  gameBoardWidth: 100
-  roomCount: 100
-  eventRoomCount: 3
-  breakNumber: 170
-  populationCount: 480
-  generations: 500
+  gameBoardHeight: 70
+  gameBoardWidth: 70
+  roomCount: 30
+  eventRoomCount: 5
+  breakNumber: 40
+  populationCount: 30
+  generations: 200
   mutationGrowX: 3
   mutationGrowY: 4
   mutationGrowProb: 70
