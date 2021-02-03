@@ -93,14 +93,16 @@ namespace DG2D
             {
                 Array.Sort(population, comparer);
                 Array.Clear(childrenPopulation, 0, childrenPopulation.Length);
-                bool flag = true;
 
-                for(int j = 0; j < population.Length; j++)
+                for(int j = 0; j < population.Length; j += 2)
                 {
-                    if (flag)
+                    if (j + 1 == population.Length)
+                        childrenPopulation[j] = population[j];
+                    else
                     {
                         Phenotype leftChild;
                         Phenotype rightChild;
+
                         Crossover(population[j], population[j + 1], out leftChild, out rightChild);
 
                         if (Random.Range(1, 100) <= mutationGrowProb)
@@ -108,18 +110,12 @@ namespace DG2D
                         if (Random.Range(1, 100) <= mutationGrowProb)
                             MutationGrow(rightChild);
                         if (Random.Range(1, 100) <= mutationTrimProb)
-                            MutationGrow(leftChild);
+                            MutationTrim(leftChild);
                         if (Random.Range(1, 100) <= mutationTrimProb)
-                            MutationGrow(rightChild);
+                            MutationTrim(rightChild);
 
                         childrenPopulation[j] = leftChild;
                         childrenPopulation[j + 1] = rightChild;
-                        flag = false;
-                    }
-                    else
-                    {
-                        flag = true;
-                        continue;
                     }
                 }
                 Array.Sort(childrenPopulation, comparer);
@@ -380,6 +376,8 @@ namespace DG2D
         private void MutationTrim(Phenotype phenotype)
         {
             TreeNode rand = phenotype.Root.GetRandomChild();
+            if (rand is null)
+                return;
             rand.Detach();
             rand.Dispose();
             RegeneratePhenotype(phenotype);
