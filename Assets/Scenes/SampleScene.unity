@@ -144,9 +144,9 @@ MonoBehaviour:
   gameBoardHeight: 70
   gameBoardWidth: 70
   roomCount: 30
-  eventRoomCount: 5
-  breakNumber: 40
-  populationCount: 30
+  eventRoomCount: 2
+  breakNumber: 50
+  populationCount: 29
   generations: 200
   mutationGrowX: 3
   mutationGrowY: 4

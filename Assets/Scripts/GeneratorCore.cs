@@ -45,6 +45,7 @@ namespace DG2D
         public void Initialize()
         {
             population = new Phenotype[populationCount];
+            currentGameBoard = new DungeonTile[gameBoardHeight, gameBoardWidth];
         }
         public void Awake()
         {
@@ -122,7 +123,7 @@ namespace DG2D
                 Array.Copy(childrenPopulation, 0, population, population.Length / 2, population.Length / 2);
             }
             Array.Sort(population, comparer);
-            currentGameBoard = population[0].GameBoard;
+            RegeneratePhenotype(population[0]);
             Draw();
             Debug.LogFormat("Candidate selected! Room count: {0}, Fitness value: {1}", population[0].Root.Count, Evaluate(population[0]));
             Debug.LogFormat("Execution time: {0}", Time.realtimeSinceStartup);
@@ -131,7 +132,7 @@ namespace DG2D
         {
             int breakCounter = breakNumber;
             int roomCounter = roomCount;
-            currentGameBoard = new DungeonTile[gameBoardHeight, gameBoardWidth];
+            Clean();
             TreeNode root = new TreeNode(RoomDefinitions.GetRandomRoom());
             Queue<TreeNode> queue = new Queue<TreeNode>();
 
@@ -149,25 +150,25 @@ namespace DG2D
                 }
                 TreeNode currentNode = queue.Dequeue();
 
-                    if (currentNode.ParentNode != null)
+                if (currentNode.ParentNode != null)
+                {
+                    if (!AttachRoom(currentNode.ParentNode, currentNode))
                     {
-                        if (!AttachRoom(currentNode.ParentNode, currentNode))
-                        {
-                            currentNode.Dispose();
-                            queue.Enqueue(new TreeNode(RoomDefinitions.GetRandomRoom()) { ParentNode = currentNode.ParentNode });
-                            continue;
-                        }
+                        currentNode.Dispose();
+                        queue.Enqueue(new TreeNode(RoomDefinitions.GetRandomRoom()) { ParentNode = currentNode.ParentNode });
+                        continue;
                     }
-                    else
+                }
+                else
+                {
+                    Vector2Int pos = new Vector2Int(gameBoardWidth / 2, gameBoardHeight /2);//new Vector2Int(Random.Range(0, gameBoardWidth), Random.Range(0, gameBoardHeight));
+                    if (!TryPlaceRoom(currentNode, pos))
                     {
-                        Vector2Int pos = new Vector2Int(gameBoardWidth / 2, gameBoardHeight /2);//new Vector2Int(Random.Range(0, gameBoardWidth), Random.Range(0, gameBoardHeight));
-                        if (!TryPlaceRoom(currentNode, pos))
-                        {
-                            currentNode = new TreeNode(RoomDefinitions.GetRandomRoom());
-                            queue.Enqueue(currentNode);
-                            continue;
-                        }
+                        currentNode = new TreeNode(RoomDefinitions.GetRandomRoom());
+                        queue.Enqueue(currentNode);
+                        continue;
                     }
+                }
                 roomCounter--;
                 if (roomCounter == 0)
                 {
@@ -180,8 +181,7 @@ namespace DG2D
                 foreach (var door in currentNode.Entrances.Where(x => x.Value == false))
                         queue.Enqueue(new TreeNode(RoomDefinitions.GetRandomRoom()) { ParentNode = currentNode });
             }
-            DungeonTile[,] board = currentGameBoard;
-            return new Phenotype(root, board);
+            return new Phenotype(root);
         }
         private bool TryPlaceRoomTiles(DungeonTile[,] roomTiles,  Vector2Int position)
         {
@@ -297,14 +297,13 @@ namespace DG2D
             rightBranch.Detach();
 
             RegeneratePhenotype(leftChild);
-            RegeneratePhenotype(rightChild);
+            AttachBranch(leftTrunk, rightBranch);
 
-            AttachBranch(leftTrunk, rightBranch, leftChild);
-            AttachBranch(rightTrunk, leftBranch, rightChild);
+            RegeneratePhenotype(rightChild);
+            AttachBranch(rightTrunk, leftBranch);
         }
-        private void AttachBranch(TreeNode parentNode, TreeNode childNode, Phenotype parentPhenotype)
+        private void AttachBranch(TreeNode parentNode, TreeNode childNode)
         {
-            currentGameBoard = parentPhenotype.GameBoard;
             childNode.ParentNode = parentNode;
             List<Vector2Int> parentDoorPositions = parentNode.Entrances.Where(x => x.Value == false).Select(x => x.Key).ToList();
             Vector2Int childDoorPosition = childNode.LocalParentEntrance;
@@ -344,15 +343,13 @@ namespace DG2D
             }
             else
                 childNode.Dispose();
-            parentPhenotype.GameBoard = currentGameBoard;
         }
 
         private void RegeneratePhenotype(Phenotype phenotype)
         {
+            Clean();
             Queue<TreeNode> bfq = new Queue<TreeNode>();
             bfq.Enqueue(phenotype.Root);
-            currentGameBoard = phenotype.GameBoard;
-            Clean();
             while (bfq.Any())
             {
                 TreeNode currentNode = bfq.Dequeue();
@@ -380,11 +377,10 @@ namespace DG2D
                 return;
             rand.Detach();
             rand.Dispose();
-            RegeneratePhenotype(phenotype);
         }
         private void MutationGrow(Phenotype phenotype)
         {
-            currentGameBoard = phenotype.GameBoard;
+            RegeneratePhenotype(phenotype);
             List<TreeNode> openRooms = phenotype.Root.ToList().Where(a => a.Entrances.Any(b => b.Value == false)).ToList();
             int x = openRooms.Count < mutationGrowX ? openRooms.Count : mutationGrowX;
             int y = mutationGrowY;
@@ -420,9 +416,7 @@ namespace DG2D
                     }
 
                 }
-            }
-            phenotype.GameBoard = currentGameBoard;
-            
+            }            
         }
         public float Evaluate(Phenotype phenotype)
         {
