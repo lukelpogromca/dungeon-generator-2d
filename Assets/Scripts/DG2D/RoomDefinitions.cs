@@ -1,4 +1,5 @@
 ﻿using DG2D.Enums;
+
 namespace DG2D.Globals
 {
     public static class RoomDefinitions

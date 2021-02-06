@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Random = System.Random;
+using System;
 
 namespace DG2D.Utils
 {

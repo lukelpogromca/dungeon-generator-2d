@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using DG2D;
 using UnityEngine.UI;
 using System.Threading.Tasks;

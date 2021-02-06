@@ -1,9 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using DG2D.Enums;
-
-namespace DG2D
+﻿namespace DG2D
 {
     public class Phenotype
     {

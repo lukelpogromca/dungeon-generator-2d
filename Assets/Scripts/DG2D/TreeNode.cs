@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using DG2D.Enums;
-using Random = UnityEngine.Random;
 using System.Linq;
 
 namespace DG2D

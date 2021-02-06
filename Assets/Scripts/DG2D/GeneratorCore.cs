@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using DG2D.Enums;
 using System;
-using UnityEngine.Tilemaps;
 using DG2D.Globals;
 using DG2D.Utils;
 using System.Linq;
@@ -31,11 +30,6 @@ namespace DG2D
 
         private DungeonTile[,] currentGameBoard;
         public DungeonTile[,] GameBoard { get { return currentGameBoard; } }
-
-        public Tile emptyTile;
-        public Tile floorTile;
-        public Tile wallTile;
-        public Tile doorTile;
 
         private GameObject gridHolder;
         private GameObject backgroundTilemapHolder;
