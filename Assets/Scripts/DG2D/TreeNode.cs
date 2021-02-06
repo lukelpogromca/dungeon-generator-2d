@@ -72,7 +72,7 @@ namespace DG2D
         }
         public TreeNode GetRandomChild()
         {
-            int rand = Random.Range(0, CountChildren() - 1);
+            int rand = Utils.Utils.DG2DRand.Next(0, CountChildren());
             TreeNode result = null;
             Queue<TreeNode> bfq = new Queue<TreeNode>();
             foreach (TreeNode child in childrenNodes)

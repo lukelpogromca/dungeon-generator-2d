@@ -1,17 +1,15 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using System.Collections.Generic;
 using DG2D.Enums;
 using System;
-using Random = UnityEngine.Random;
 using UnityEngine.Tilemaps;
 using DG2D.Globals;
 using DG2D.Utils;
 using System.Linq;
+using UnityEngine;
 
 namespace DG2D
 {
-    public class GeneratorCore : MonoBehaviour
+    public class GeneratorCore
     {
         private Phenotype[] population;
 
@@ -29,8 +27,10 @@ namespace DG2D
         [Range(0, 100)]
         public int mutationTrimProb;
         public Vector3Int origin = Vector3Int.zero;
+        public float Progress { get { return 1.0f * progressCounter / maxProgressValue; } }
 
-        public DungeonTile[,] currentGameBoard;
+        private DungeonTile[,] currentGameBoard;
+        public DungeonTile[,] GameBoard { get { return currentGameBoard; } }
 
         public Tile emptyTile;
         public Tile floorTile;
@@ -42,51 +42,22 @@ namespace DG2D
         private GameObject floorTilemapHolder;
         private GameObject wallsTilemapHolder;
         private GameObject doorsTilemapHolder;
+        private int progressCounter;
+        private int maxProgressValue;
         public void Initialize()
         {
             population = new Phenotype[populationCount];
             currentGameBoard = new DungeonTile[gameBoardHeight, gameBoardWidth];
+            progressCounter = 0;
+            maxProgressValue = populationCount + generations * populationCount;
         }
-        public void Awake()
+        public void GeneratePopulation()
         {
-            Initialize();
-
-            gridHolder = new GameObject("Grid");
-            gridHolder.transform.parent = gameObject.transform;
-            Grid grid = gridHolder.AddComponent<Grid>();
-            backgroundTilemapHolder = new GameObject("Background", typeof(Tilemap), typeof(TilemapRenderer));
-            floorTilemapHolder = new GameObject("Floor", typeof(Tilemap), typeof(TilemapRenderer));
-            wallsTilemapHolder = new GameObject("Walls", typeof(Tilemap), typeof(TilemapRenderer));
-            doorsTilemapHolder = new GameObject("Doors", typeof(Tilemap), typeof(TilemapRenderer));
-            backgroundTilemapHolder.transform.parent = gridHolder.transform;
-            floorTilemapHolder.transform.parent = gridHolder.transform;
-            wallsTilemapHolder.transform.parent = gridHolder.transform;
-            doorsTilemapHolder.transform.parent = gridHolder.transform;
-        }
-        private void Draw()
-        {
-            for(int i = 0; i < currentGameBoard.GetLength(0); i++)
-            {
-                for(int j = 0; j < currentGameBoard.GetLength(1); j++)
-                {
-                    DungeonTile currentTile = currentGameBoard[i, j];
-
-                    if (currentTile == DungeonTile.Empty)
-                        backgroundTilemapHolder.GetComponent<Tilemap>().SetTile(new Vector3Int(j, i, 0) + origin, emptyTile);
-                    else if(currentTile == DungeonTile.Floor)
-                        floorTilemapHolder.GetComponent<Tilemap>().SetTile(new Vector3Int(j, i, 0) + origin, floorTile);
-                    else if(currentTile == DungeonTile.Wall)
-                        wallsTilemapHolder.GetComponent<Tilemap>().SetTile(new Vector3Int(j, i, 0) + origin, wallTile);
-                    else if(currentTile == DungeonTile.Door)
-                        doorsTilemapHolder.GetComponent<Tilemap>().SetTile(new Vector3Int(j, i, 0) + origin, doorTile);
-                }
-            }
-        }
-        public void Start()
-        {
-            for (int i = 0; i < population.Length; i++)
+            for (int i = 0; i < population.Length; i++, progressCounter++)
                 population[i] = GeneratePhenotype();
-
+        }
+        public void EvolvePopulation()
+        {
             FitnessComparer comparer = new FitnessComparer(this);
             Phenotype[] childrenPopulation = new Phenotype[populationCount];
 
@@ -95,28 +66,32 @@ namespace DG2D
                 Array.Sort(population, comparer);
                 Array.Clear(childrenPopulation, 0, childrenPopulation.Length);
 
-                for(int j = 0; j < population.Length; j += 2)
+                for (int j = 0; j < population.Length; j += 2)
                 {
                     if (j + 1 == population.Length)
+                    {
                         childrenPopulation[j] = population[j];
+                        progressCounter++;
+                    }
                     else
                     {
                         Phenotype leftChild;
                         Phenotype rightChild;
 
                         Crossover(population[j], population[j + 1], out leftChild, out rightChild);
-
-                        if (Random.Range(1, 100) <= mutationGrowProb)
+                        if (Utils.Utils.DG2DRand.Next(1, 100) <= mutationGrowProb)
                             MutationGrow(leftChild);
-                        if (Random.Range(1, 100) <= mutationGrowProb)
+                        if (Utils.Utils.DG2DRand.Next(1, 100) <= mutationGrowProb)
                             MutationGrow(rightChild);
-                        if (Random.Range(1, 100) <= mutationTrimProb)
+                        if (Utils.Utils.DG2DRand.Next(1, 100) <= mutationTrimProb)
                             MutationTrim(leftChild);
-                        if (Random.Range(1, 100) <= mutationTrimProb)
+                        if (Utils.Utils.DG2DRand.Next(1, 100) <= mutationTrimProb)
                             MutationTrim(rightChild);
 
                         childrenPopulation[j] = leftChild;
                         childrenPopulation[j + 1] = rightChild;
+
+                        progressCounter += 2;
                     }
                 }
                 Array.Sort(childrenPopulation, comparer);
@@ -124,9 +99,6 @@ namespace DG2D
             }
             Array.Sort(population, comparer);
             RegeneratePhenotype(population[0]);
-            Draw();
-            Debug.LogFormat("Candidate selected! Room count: {0}, Fitness value: {1}", population[0].Root.Count, Evaluate(population[0]));
-            Debug.LogFormat("Execution time: {0}", Time.realtimeSinceStartup);
         }
         private Phenotype GeneratePhenotype()
         {
@@ -145,7 +117,6 @@ namespace DG2D
                     foreach (TreeNode element in queue)
                         element.Dispose();
                     queue.Clear();
-                    Debug.LogFormat("Break number reached! Break counter: {0}, Room counter: {1}", breakCounter, roomCounter);
                     break;
                 }
                 TreeNode currentNode = queue.Dequeue();
@@ -161,7 +132,7 @@ namespace DG2D
                 }
                 else
                 {
-                    Vector2Int pos = new Vector2Int(gameBoardWidth / 2, gameBoardHeight /2);//new Vector2Int(Random.Range(0, gameBoardWidth), Random.Range(0, gameBoardHeight));
+                    Vector2Int pos = new Vector2Int(gameBoardWidth / 2, gameBoardHeight / 2);
                     if (!TryPlaceRoom(currentNode, pos))
                     {
                         currentNode = new TreeNode(RoomDefinitions.GetRandomRoom());
@@ -175,7 +146,6 @@ namespace DG2D
                     foreach (TreeNode element in queue)
                         element.Dispose();
                     queue.Clear();
-                    Debug.LogFormat("Room count reached! Break counter: {0}, Room counter: {1}", breakCounter, roomCounter);
                     break;
                 }
                 foreach (var door in currentNode.Entrances.Where(x => x.Value == false))

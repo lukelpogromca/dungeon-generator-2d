@@ -1,5 +1,4 @@
 ﻿using DG2D.Enums;
-using UnityEngine;
 namespace DG2D.Globals
 {
     public static class RoomDefinitions
@@ -123,7 +122,7 @@ namespace DG2D.Globals
         };
         public static DungeonComponent GetRandomRoom()
         {
-            int i = Random.Range(0, data.Length);
+            int i = Utils.Utils.DG2DRand.Next(0, data.Length);
             return data[i];
         }
     }
