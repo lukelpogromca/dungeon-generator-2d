@@ -21,11 +21,8 @@ namespace DG2D
         public int generations;
         public int mutationGrowX;
         public int mutationGrowY;
-        [Range(0, 100)]
         public int mutationGrowProb;
-        [Range(0, 100)]
         public int mutationTrimProb;
-        public Vector3Int origin = Vector3Int.zero;
         public float Progress { get { return 1.0f * progressCounter / maxProgressValue; } }
 
         private DungeonTile[,] currentGameBoard;
