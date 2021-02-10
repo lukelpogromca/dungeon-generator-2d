@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using System.Threading.Tasks;
 using UnityEngine.Tilemaps;
 using DG2D.Enums;
+using System.Linq;
 
 public class LevelLoader : MonoBehaviour
 {
@@ -12,6 +13,7 @@ public class LevelLoader : MonoBehaviour
     public GameObject mainScreen;
     public GameObject loadingScreen;
     public GameObject settingsScreen;
+    public GameObject HUD;
     public Slider progressBar;
     public Text progressText;
     public InputField gameBoardWidthIF;
@@ -24,8 +26,11 @@ public class LevelLoader : MonoBehaviour
     public InputField mutationGrowYIF;
     public Slider mutationGrowProbSlider;
     public Slider mutationTrimProbSlider;
+    public Toggle cameraToggle;
 
     public Camera overviewCamera;
+    public Camera playerCamera;
+    public Transform characterHandle;
     public Vector3Int origin = Vector3Int.zero;
 
     public Tile emptyTile;
@@ -50,12 +55,16 @@ public class LevelLoader : MonoBehaviour
         generationsIF.onValidateInput += (string s, int i, char c) => LessThanZero(c);
         mutationGrowXIF.onValidateInput += (string s, int i, char c) => LessThanZero(c);
         mutationGrowYIF.onValidateInput += (string s, int i, char c) => LessThanZero(c);
+
+        cameraToggle.onValueChanged.AddListener(SwitchCameras);
     }
     void Start()
     {
+        characterHandle.gameObject.SetActive(false);
         mainScreen.SetActive(true);
         loadingScreen.SetActive(false);
         settingsScreen.SetActive(false);
+        HUD.SetActive(false);
     }
 
     // Update is called once per frame
@@ -64,13 +73,16 @@ public class LevelLoader : MonoBehaviour
         progressBar.value = generator.Progress;
         progressText.text = (int)(generator.Progress * 100) + "%";
     }
+    private void FixedUpdate()
+    {
+    }
     public async void GenerateLevel()
     {
         generator.Initialize();
         await Task.Run(() => generator.GeneratePopulation()).ContinueWith(x => generator.EvolvePopulation());
-        DrawScene();
+        Play();
     }
-    private void DrawScene()
+    private void Play()
     {
         gridHolder = new GameObject("Grid");
         gridHolder.transform.parent = gameObject.transform;
@@ -84,6 +96,8 @@ public class LevelLoader : MonoBehaviour
         wallsTilemapHolder.transform.parent = gridHolder.transform;
         doorsTilemapHolder.transform.parent = gridHolder.transform;
 
+        Vector3Int position = Vector3Int.zero;
+
         for (int i = 0; i < generator.GameBoard.GetLength(0); i++)
         {
             for (int j = 0; j < generator.GameBoard.GetLength(1); j++)
@@ -93,18 +107,42 @@ public class LevelLoader : MonoBehaviour
                 if (currentTile == DungeonTile.Empty)
                     backgroundTilemapHolder.GetComponent<Tilemap>().SetTile(new Vector3Int(j, i, 0) + origin, emptyTile);
                 else if (currentTile == DungeonTile.Floor)
-                    floorTilemapHolder.GetComponent<Tilemap>().SetTile(new Vector3Int(j, i, 0) + origin, floorTile);
+                {
+                    position = new Vector3Int(j, i, 0) + origin;
+                    floorTilemapHolder.GetComponent<Tilemap>().SetTile(position, floorTile);
+                }
                 else if (currentTile == DungeonTile.Wall)
                     wallsTilemapHolder.GetComponent<Tilemap>().SetTile(new Vector3Int(j, i, 0) + origin, wallTile);
                 else if (currentTile == DungeonTile.Door)
                     doorsTilemapHolder.GetComponent<Tilemap>().SetTile(new Vector3Int(j, i, 0) + origin, doorTile);
             }
         }
-
         PositionOverviewCamera();
+        wallsTilemapHolder.AddComponent(typeof(TilemapCollider2D));
+
+        characterHandle.position = position;
+        playerCamera.transform.position = position;
+        characterHandle.gameObject.SetActive(true);
+        overviewCamera.enabled = false;
+        playerCamera.enabled = true;
+
         mainScreen.SetActive(false);
         loadingScreen.SetActive(false);
         settingsScreen.SetActive(false);
+        cameraToggle.isOn = false;
+        HUD.SetActive(true);
+    }
+    public void Exit()
+    {
+        Destroy(gridHolder);
+        characterHandle.gameObject.SetActive(false);
+        playerCamera.enabled = false;
+        overviewCamera.enabled = true;
+        HUD.SetActive(false);
+        loadingScreen.SetActive(false);
+        settingsScreen.SetActive(false);
+        mainScreen.SetActive(true);
+
     }
     public void Quit()
     {
@@ -125,7 +163,7 @@ public class LevelLoader : MonoBehaviour
 
         generator.breakNumber = (int)(generator.roomCount * 1.75);
 }
-    public char LessThanZero (char character)
+    private char LessThanZero (char character)
     {
         if (character == '-')
             return '\0';
@@ -152,5 +190,18 @@ public class LevelLoader : MonoBehaviour
         overviewCamera.orthographicSize = sizeFromHeight > sizeFromWidth ? sizeFromHeight : sizeFromWidth;
         Vector3 cameraPos = new Vector3(origin.x + generator.GameBoard.GetLength(1) / 2f, origin.y + generator.GameBoard.GetLength(0) / 2f, 0f);
         overviewCamera.GetComponent<Transform>().position = cameraPos;
+    }
+    private void SwitchCameras(bool value)
+    {
+        if(value)
+        {
+            overviewCamera.enabled = true;
+            playerCamera.enabled = false;
+        }
+        else
+        {
+            overviewCamera.enabled = false;
+            playerCamera.enabled = true;
+        }
     }
 }

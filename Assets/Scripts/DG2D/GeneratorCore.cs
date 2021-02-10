@@ -90,6 +90,11 @@ namespace DG2D
             }
             Array.Sort(population, comparer);
             RegeneratePhenotype(population[0]);
+
+            //Post-process
+            List<Vector2Int> nce = (List<Vector2Int>)GetNonConnectingEntrances(population[0]);
+            foreach (var element in nce)
+                currentGameBoard[element.y, element.x] = DungeonTile.Wall;
         }
         private Phenotype GeneratePhenotype()
         {
@@ -100,7 +105,7 @@ namespace DG2D
             Queue<TreeNode> queue = new Queue<TreeNode>();
 
             queue.Enqueue(root);
-            while(queue.Any())
+            while (queue.Any())
             {
                 breakCounter--;
                 if (breakCounter == 0)
@@ -140,17 +145,17 @@ namespace DG2D
                     break;
                 }
                 foreach (var door in currentNode.Entrances.Where(x => x.Value == false))
-                        queue.Enqueue(new TreeNode(RoomDefinitions.GetRandomRoom()) { ParentNode = currentNode });
+                    queue.Enqueue(new TreeNode(RoomDefinitions.GetRandomRoom()) { ParentNode = currentNode });
             }
             return new Phenotype(root);
         }
-        private bool TryPlaceRoomTiles(DungeonTile[,] roomTiles,  Vector2Int position)
+        private bool TryPlaceRoomTiles(DungeonTile[,] roomTiles, Vector2Int position)
         {
             DungeonTile[,] boardCopy = (DungeonTile[,])currentGameBoard.Clone();
 
             for (int i = 0; i < roomTiles.GetLength(0); i++)
             {
-                for(int j = 0; j < roomTiles.GetLength(1); j++)
+                for (int j = 0; j < roomTiles.GetLength(1); j++)
                 {
                     try
                     {
@@ -182,7 +187,7 @@ namespace DG2D
             foreach (Vector2Int parentDoorPosition in parentDoorPositions)
             {
                 DungeonComponent.GetTileDataMethods.Shuffle();
-                foreach ( GetTileDataDelegate method in DungeonComponent.GetTileDataMethods)
+                foreach (GetTileDataDelegate method in DungeonComponent.GetTileDataMethods)
                 {
                     childNode.TileData = method;
                     roomTiles = childNode.GetTileData(out doorPositions);
@@ -191,7 +196,7 @@ namespace DG2D
                     {
                         Vector2Int position = parentNode.WorldPosition + parentDoorPosition - doorPosition;
                         Vector2Int relativePosition = parentDoorPosition - doorPosition;
-                        if (position == parentNode.WorldPosition && doorPosition == parentDoorPosition) //Issue: Two rooms on top of each other.
+                        if (childNode.DungeonComponent == parentNode.DungeonComponent && doorPosition == parentDoorPosition) //Issue: Two rooms on top of each other.
                             continue;
 
                         if (TryPlaceRoomTiles(roomTiles, position))
@@ -269,14 +274,17 @@ namespace DG2D
             List<Vector2Int> parentDoorPositions = parentNode.Entrances.Where(x => x.Value == false).Select(x => x.Key).ToList();
             Vector2Int childDoorPosition = childNode.LocalParentEntrance;
             bool attached = false;
-            foreach(Vector2Int pos in parentDoorPositions)
+            foreach (Vector2Int pos in parentDoorPositions)
             {
                 Vector2Int pos1 = pos - childDoorPosition;
-                if(TryPlaceRoomTiles(childNode.GetTileData(out _), parentNode.WorldPosition + pos1))
+                if (childNode.DungeonComponent == parentNode.DungeonComponent && pos == childDoorPosition) //Issue: Two rooms on top of each other.
+                    continue;
+                if (TryPlaceRoomTiles(childNode.GetTileData(out _), parentNode.WorldPosition + pos1))
                 {
                     childNode.LocalPosition = pos1;
                     parentNode.Entrances[pos] = true;
                     childNode.ParentEntrance = pos;
+                    childNode.Entrances[childNode.LocalParentEntrance] = true;
                     attached = true;
                     break;
                 }
@@ -303,7 +311,9 @@ namespace DG2D
                 }
             }
             else
+            {
                 childNode.Dispose();
+            }
         }
 
         private void RegeneratePhenotype(Phenotype phenotype)
@@ -349,7 +359,7 @@ namespace DG2D
             Queue<TreeNode> bfq = new Queue<TreeNode>();
             openRooms.Shuffle();
 
-            for(int i = 0; i < x; i++)
+            for (int i = 0; i < x; i++)
             {
                 TreeNode branch = new TreeNode(RoomDefinitions.GetRandomRoom()) { ParentNode = openRooms[i] };
                 bfq.Enqueue(branch);
@@ -377,7 +387,7 @@ namespace DG2D
                     }
 
                 }
-            }            
+            }
         }
         public float Evaluate(Phenotype phenotype)
         {
@@ -394,7 +404,7 @@ namespace DG2D
 
             Queue<TreeNode> bfq = new Queue<TreeNode>();
             bfq.Enqueue(phenotype.Root);
-            while(bfq.Any())
+            while (bfq.Any())
             {
                 TreeNode currentNode = bfq.Dequeue();
                 roomCounter++;
@@ -418,6 +428,23 @@ namespace DG2D
             float hallwayFactor = roomConnections * .3f + hallwayConnections * .2f - deadEndCounter * .5f;
 
             return (standardRoomCounter + eventRoomCounter) * nonHallwayCountMultiplier + hallwayFactor - (Math.Abs(roomCount - roomCounter) * roomCountMultiplier + Math.Abs(eventRoomCount - eventRoomCounter) * eventRoomCountMultiplier);
+        }
+        public IList<Vector2Int> GetNonConnectingEntrances(Phenotype phenotype)
+        {
+            List<Vector2Int> result = new List<Vector2Int>();
+            Queue<TreeNode> bfq = new Queue<TreeNode>();
+            bfq.Enqueue(phenotype.Root);
+            while (bfq.Any())
+            {
+                TreeNode currentNode = bfq.Dequeue();
+
+                result.AddRange(currentNode.Entrances.Where(x => x.Value == false).Select(x => x.Key + currentNode.WorldPosition));
+
+                foreach (TreeNode childNode in currentNode.ChildrenNodes)
+                    bfq.Enqueue(childNode);
+            }
+
+            return result;
         }
     }
     public class FitnessComparer : IComparer<Phenotype>

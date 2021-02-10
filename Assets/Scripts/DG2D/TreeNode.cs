@@ -16,6 +16,7 @@ namespace DG2D
         public Vector2Int LocalParentEntrance { get; set; }
         public int Count { get { return CountChildren() + 1; } }
         public GetTileDataDelegate TileData { get; set; } = DungeonComponent.GetTileDataUp;
+        public DungeonComponent DungeonComponent { get { return dungeonComponent; } }
 
         private List<TreeNode> childrenNodes;
         private DungeonComponent dungeonComponent;

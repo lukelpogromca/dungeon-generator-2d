@@ -71,10 +71,9 @@ namespace DG2D
                 for (int j = 0; j < w; ++j)
                 {
                     ret[i, w - 1 - j] = component.tileData[h - 1 - i, j];
-                    if (ret[i, j] == DungeonTile.Door)
-                        doorPositions.Add(new Vector2Int(j, i));
                 }
             }
+            doorPositions = GetDoorLocations(ret);
             return ret;
         }
         private static List<Vector2Int> GetDoorLocations(DungeonTile[,] tileData)
